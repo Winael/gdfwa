@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import yaml
+import urllib2
+
+from os.path import expanduser
+
+home = expanduser("~")
+
+desktop_path = home + '/.local/share/applications/'
+icon_path = home + '/.local/share/icons/'
+
+
+with open(sys.argv[1], 'r') as conffile:
+
+    try:
+
+        conf = yaml.load(conffile)
+
+        for webappName, webappProperties in conf.iteritems():
+
+            dfname = webappName
+
+            if 'icon' in webappProperties:
+
+                icon = open(icon_path + webappName + '.png', 'wb')
+                icon.write(urllib2.urlopen(webappProperties['icon']).read())
+                icon.close()
+
+            df = open(desktop_path + webappName + ".desktop", 'w')
+
+            df.write("[Desktop Entry]\n")
+
+            if 'name' in webappProperties:
+
+                df.write("Name=" + webappProperties['name'] + "\n")
+
+            if 'drm' in webappProperties:
+
+                if webappProperties['drm'] == True:
+
+                    df.write("Exec=google-chrome --app=" + webappProperties['url'] + "\n")
+
+            else:
+
+                df.write("Exec=chromium-browser --app=" + webappProperties['url'] + "\n")
+
+            df.write("Icon=" + icon_path + webappName + '.png\n')
+            df.write("Type=Application\n")
+
+            if 'categories' in webappProperties:
+
+                df.write("Categories=Webapp;" + webappProperties['categories'])
+
+            df.close()
+
+            os.chmod(desktop_path + webappName + ".desktop", 0755)
+        
+    except yaml.YAMLError as esc:
+
+        print(esc)
